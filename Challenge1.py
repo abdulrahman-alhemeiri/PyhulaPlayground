@@ -3,16 +3,14 @@ import Drone
 import PathFinder
 import Utils
 
-maze = Maze.Maze(4,3)
+maze = Maze.Maze(100,100)
 start = (0, 0)
 goal = (2, 0)
 
-path = Utils.load_path_from_file("path.txt")
+path = Utils.load_path_from_file("challange_1_path.txt")
 
 drone = Drone.Drone()
 drone.take_off()
-# drone.center_at_current_block()
-# drone.center_yaw()
 
 if path is  None:
     PathFinder.discover_maze(maze, start, drone)

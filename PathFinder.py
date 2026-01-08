@@ -333,3 +333,84 @@ def discover_maze_with_objects_fast(maze, start, drone, object_coordinates, goal
             print(f"  Path blocked, replanning...")
 
     return path, len(visited), False
+
+def count_turns(path):
+    """Count number of direction changes in a path"""
+    if len(path) <= 2:
+        return 0
+
+    turns = 0
+    for i in range(1, len(path) - 1):
+        prev = path[i - 1]
+        curr = path[i]
+        next_cell = path[i + 1]
+
+        dx1 = curr[0] - prev[0]
+        dy1 = curr[1] - prev[1]
+        dx2 = next_cell[0] - curr[0]
+        dy2 = next_cell[1] - curr[1]
+
+        if (dx1, dy1) != (dx2, dy2):
+            turns += 1
+
+    return turns
+
+def astar_multi_goal_straight_preference(maze, start, goals):
+    """
+    A* pathfinding to reach multiple goals (3-4) in optimal order.
+    Returns separate path segments for each leg of the journey.
+
+    Args:
+        maze: Maze object
+        start: (x, y) starting position
+        goals: list of 3-4 (x, y) goal positions to visit (in any order)
+
+    Returns:
+        list of path segments, where each segment is a list of (x, y) cells
+        Example: [
+            [(0,0), (1,0), (2,0)],  # start to goal1
+            [(2,0), (2,1), (3,1)],  # goal1 to goal2
+            [(3,1), (4,1), (4,2)]   # goal2 to goal3
+        ]
+        Returns None if no valid path exists
+    """
+    from itertools import permutations
+
+    if not goals:
+        return [[start]]
+
+    best_segments = None
+    best_length = float('inf')
+    best_turns = float('inf')
+
+    # Try all orderings (3! = 6 or 4! = 24 permutations)
+    for perm in permutations(goals):
+        # Build path: start → goal1 → goal2 → goal3 → (goal4)
+        waypoints = [start] + list(perm)
+
+        # Calculate path segments
+        segments = []
+        total_length = 0
+        total_turns = 0
+        valid = True
+
+        for i in range(len(waypoints) - 1):
+            segment = astar_straight_preference(maze, waypoints[i], waypoints[i + 1])
+
+            if segment is None:
+                valid = False
+                break
+
+            segments.append(segment)
+            total_length += len(segment) - 1
+            total_turns += count_turns(segment)
+
+        if valid:
+            # Prefer shorter paths, break ties with fewer turns
+            if (total_length < best_length or
+                    (total_length == best_length and total_turns < best_turns)):
+                best_length = total_length
+                best_turns = total_turns
+                best_segments = segments
+
+    return best_segments

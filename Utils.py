@@ -1,30 +1,12 @@
 import json
+import os
 
-
-def save_path_to_file(path, filename="path.txt"):
-    """
-    Save optimized path to a text file.
-
-    Args:
-        path: list of (x, y) tuples representing the path
-        filename: name of file to save to (default: "path.txt")
-    """
+def save_path_to_file(path, filename="challange_1_path.txt"):
     with open(filename, 'w') as f:
         json.dump(path, f)
+    print(f"Path saved: {filename}")
 
-
-def load_path_from_file(filename="path.txt"):
-    """
-    Load path from a text file.
-
-    Args:
-        filename: name of file to load from (default: "path.txt")
-
-    Returns:
-        list of (x, y) tuples, or None if file doesn't exist
-    """
-    import os
-
+def load_path_from_file(filename="challange_1_path.txt"):
     if not os.path.exists(filename):
         print("No existing path found. Need to discover maze first.")
         return None
@@ -32,7 +14,6 @@ def load_path_from_file(filename="path.txt"):
     with open(filename, 'r') as f:
         path_data = json.load(f)
 
-    # Convert back to tuples
     path = [tuple(point) for point in path_data]
 
     print("Loaded existing path from path.txt")
@@ -41,21 +22,30 @@ def load_path_from_file(filename="path.txt"):
 
     return path
 
+def save_paths_to_file(path_segments, filename="challange_2_paths.txt"):
+    with open(filename, 'w') as f:
+        json.dump(path_segments, f)
+    print(f"Path segments saved: {len(path_segments)} segments,  {filename}")
+
+def load_paths_from_file(filename="challange_2_paths.txt"):
+    if not os.path.exists(filename):
+        print("No existing path found. Need to discover maze first.")
+        return None
+
+    with open(filename, 'r') as f:
+        segments_data = json.load(f)
+
+    # Convert back to tuples
+    path_segments = []
+    for segment in segments_data:
+        path_segments.append([tuple(point) for point in segment])
+
+    print(f"Path segments loaded: {len(path_segments)} segments, {filename}")
+    return path_segments
+
+
 def optimize_path(path):
-    """
-    Optimize path by removing intermediate points in straight lines.
-    Keeps only points where direction changes.
 
-    Args:
-        path: list of (x, y) tuples representing the path
-
-    Returns:
-        optimized_path: list of (x, y) tuples with intermediate points removed
-
-    Example:
-        Input:  [(0,0), (1,0), (2,0), (3,0), (3,1), (3,2)]
-        Output: [(0,0), (3,0), (3,2)]
-    """
     if len(path) <= 2:
         return path
 

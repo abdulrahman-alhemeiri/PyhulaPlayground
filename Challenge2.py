@@ -1,23 +1,38 @@
 import Maze
-import Drone
+from Drone import Drone
 import PathFinder
 import Utils
 
 maze = Maze.Maze(4,3)
 start = (0, 0)
-goal = (0, 1)
-object_coordinates = [(0, 2), (2, 0), (3, 2)]
+object_coordinates = [(2, 0), (3, 1), (2, 1)]
+object_directions= {
+    (2, 0): "West",
+    (2, 1): "East",
+    (3, 1): "West"
+}
+current_bearing = "North"
 
-drone = Drone.Drone()
+paths = Utils.load_paths_from_file("challange_2_paths.txt")
+
+drone = Drone(current_bearing)
 is_phase_3_video_mode = True
 drone.take_off(is_phase_3_video_mode)
-
-# drone.center_at_current_block()
 drone.center_yaw()
 
-path, length, goal_not_reached = PathFinder.discover_maze_with_objects_fast(maze, start, drone, object_coordinates, goal)
-if goal_not_reached:
-    optimized_path = Utils.optimize_path(path)
-    drone.traverse_path(optimized_path)
+if paths is None:
+    PathFinder.discover_maze(maze, start, drone)
+    paths = PathFinder.astar_multi_goal_straight_preference(maze, start, object_coordinates)
+    optimized_paths = []
+    for i in range(len(paths)):
+        optimized_path = Utils.optimize_path(paths[i])
+        optimized_paths.append(optimized_path)
+    Utils.save_paths_to_file(optimized_paths)
+else:
+    for i in range(len(paths)):
+        drone.traverse_path(paths[i])
+        current_block = drone.get_current_block()
+        drone.perform_detection(object_directions[tuple(current_block)])
+        print(f"(main): Performing object detection at block {tuple(current_block)} which has direction {object_directions[tuple(current_block)]}")
 
 drone.land(is_phase_3_video_mode)

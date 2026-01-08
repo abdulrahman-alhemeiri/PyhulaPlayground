@@ -1,22 +1,32 @@
+from typing import List, Any
+
 import pyhula
 import time
 import math
 import sys
+import cv2
+import os
+
 from hula_video import hula_video
 from onnxdetector import onnxdetector
+from datetime import datetime, timezone
 
-SLEEP_VALUE = 1
+SLEEP_VALUE = 0.8
+OBJECT_DETECTION_MAX_TRIES = 100
 
 class Drone:
-    def __init__(self):
+    def __init__(self, bearing="North"):
         self.api = pyhula.UserApi()
         if not self.api.connect():
             print("connect error!!!!!!!")
             sys.exit(0)
         else:
             print("connection to station by wifi")
+        self.api.Plane_cmd_camera_angle(4, 0)
         self.vid = hula_video(hula_api = self.api, display = False)
         self.huladetector = onnxdetector(model="detect_3_object_12_11.onnx", label="object.txt", confidence_thres=0.65)
+        self.current_bearing = bearing
+        time.sleep(2)
 
     def move_to_coordinates(self, x, y, z):
         print(f"move_to_coordinates()::: moving to coordinates: [X: {x}, Y: {y}, Z: {z}]")
@@ -89,26 +99,54 @@ class Drone:
         target_x = 60 * x + 15
         target_y = 60 * y + 15
         print(f"move_to_block()::: target coordinates: [X: {target_x}, Y: {target_y}]")
-        self.move_to_coordinates(target_x, target_y, 90)
+        self.move_to_coordinates(target_x, target_y, 100)
 
     def get_barriers(self):
         print(f"get_barriers()::: getting current barriers")
         obstacles = self.api.Plane_getBarrier()
         result = []
+
+        bearing_dictionary = {
+            "North": {
+                "forward": "forward",
+                "left": "left",
+                "back": "back",
+                "right": "right"
+            },
+            "West": {
+                "forward": "left",
+                "left": "back",
+                "back": "right",
+                "right": "forward"
+            },
+            "South": {
+                "forward": "back",
+                "left": "right",
+                "back": "forward",
+                "right": "left"
+            },
+            "East": {
+                "forward": "right",
+                "left": "forward",
+                "back": "left",
+                "right": "back"
+            }
+        }
+
         if obstacles["forward"]:
-            result.append("forward")
+            result.append(bearing_dictionary[self.current_bearing]["forward"])
         if obstacles["back"]:
-            result.append("back")
+            result.append(bearing_dictionary[self.current_bearing]["back"])
         if obstacles["right"]:
-            result.append("right")
+            result.append(bearing_dictionary[self.current_bearing]["right"])
         if obstacles["left"]:
-            result.append("left")
+            result.append(bearing_dictionary[self.current_bearing]["left"])
 
         print(f"get_barriers()::: Obstacles found: " + str(result))
 
         return result
 
-    def get_current_block(self):
+    def get_current_block(self) -> List[Any]:
         print(f"get_current_block()::: getting current block")
         x, y, z = self.api.get_coordinate()
         print(f"get_current_block()::: current coordinates: [X: {x}, Y: {y}, Z: {z}]")
@@ -121,89 +159,60 @@ class Drone:
         for x, y in path:
             self.move_to_block(x, y)
 
-    def perform_360_object_detection(self):
+    def turn_to_bearing(self, direction):
+        if self.current_bearing == "North":
+            if direction == "West":
+                self.api.single_fly_turnleft(90)
+            elif direction == "South":
+                self.api.single_fly_turnleft(180)
+            elif direction == "East":
+                self.api.single_fly_turnright(90)
+        elif self.current_bearing == "West":
+            if direction == "South":
+                self.api.single_fly_turnleft(90)
+            elif direction == "East":
+                self.api.single_fly_turnleft(180)
+            elif direction == "North":
+                self.api.single_fly_turnright(90)
+        elif self.current_bearing == "South":
+            if direction == "East":
+                self.api.single_fly_turnleft(90)
+            elif direction == "North":
+                self.api.single_fly_turnleft(180)
+            elif direction == "West":
+                self.api.single_fly_turnright(90)
+        elif self.current_bearing == "East":
+            if direction == "North":
+                self.api.single_fly_turnleft(90)
+            elif direction == "West":
+                self.api.single_fly_turnleft(180)
+            elif direction == "South":
+                self.api.single_fly_turnright(90)
+
+        self.current_bearing = direction
+        return
+
+    def perform_detection(self, direction):
+        print(f"+++++++++++++++Performing object detection at direction {direction}")
+        self.turn_to_bearing(direction)
         current_block = self.get_current_block()
-        cell_file_name = f"Cell({current_block[0]}, {current_block[1]})"
+        cell_file_name = f"Cell({current_block[0]}, {current_block[1]})_{direction}_"
         self.vid.startrecording(cell_file_name)
-        self.center_at_current_block()
+        savepath = os.path.join(os.getcwd(), 'photo')
+        object_found = False
+        for i in range(OBJECT_DETECTION_MAX_TRIES):
+            frame = self.vid.get_video()
+            obj_found, frame = self.huladetector.detect(frame)
+            if not obj_found is None:
+                timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                filename = f"{obj_found['label']}_{cell_file_name}{timestamp}.jpg"
+                cv2.imwrite(os.path.join(savepath, filename), frame)
+                print(f"Found {obj_found}")
+                print(f"Saving to file: {filename}")
+                object_found = True
+                break
 
-        barriers = self.api.Plane_getBarrier()
-        if barriers["forward"]:
-            self.perform_detection()
-
-        current_direction = "forward"
-        next_direction = "forward"
-        target_turn = -1
-        if barriers["left"]:
-            target_turn = 90
-            next_direction = "left"
-        elif barriers["back"]:
-            target_turn = 180
-            next_direction = "back"
-        elif barriers["right"]:
-            target_turn = 90
-            next_direction = "right"
-
-        if next_direction is "forward":
-            return
-        if next_direction is "right":
-            self.api.single_fly_turnright(target_turn)
-            time.sleep(SLEEP_VALUE)
-        else:
-            self.api.single_fly_turnleft(target_turn)
-            time.sleep(SLEEP_VALUE)
-
-        current_direction = next_direction
-
-        if current_direction is "left":
-            if barriers["left"]:
-                self.perform_detection()
-
-            if barriers["back"]:
-                target_turn = 90
-                next_direction = "back"
-            elif barriers["right"]:
-                target_turn = 180
-                next_direction = "right"
-            else:
-                target_turn = 90
-                next_direction = "forward"
-
-            if next_direction is "forward":
-                self.api.single_fly_turnright(target_turn)
-                time.sleep(SLEEP_VALUE)
-            else:
-                self.api.single_fly_turnleft(target_turn)
-                time.sleep(SLEEP_VALUE)
-
-            current_direction = next_direction
-
-        if current_direction is "back":
-            if barriers["back"]:
-                self.perform_detection()
-
-            if barriers["right"]:
-                target_turn = 90
-                next_direction = "right"
-            else:
-                target_turn = 180
-                next_direction = "forward"
-
-            self.api.single_fly_turnleft(target_turn)
-            time.sleep(SLEEP_VALUE)
-            current_direction = next_direction
-
-        if current_direction is "right":
-            if barriers["back"]:
-                self.perform_detection()
-            self.api.single_fly_turnleft(90)
-            time.sleep(SLEEP_VALUE)
+        print(f"Object found? {object_found}")
 
         self.vid.stoprecording()
-        time.sleep(SLEEP_VALUE)
-
-    def perform_detection(self):
-        frame = self.vid.get_video()
-        obj_found, frame = self.huladetector.detect(frame)
-        if not obj_found is None:
-            print(f"Found {obj_found}")
+        # self.center_yaw()

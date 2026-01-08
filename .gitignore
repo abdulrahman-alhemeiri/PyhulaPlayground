@@ -207,3 +207,10 @@ marimo/_lsp/
 __marimo__/
 
 .idea/
+
+hula-detect-best.onnx
+hula.txt
+hula_video.py
+onnxdetector.py
+path.txt
+tmp.sdp

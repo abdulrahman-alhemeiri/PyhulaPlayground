@@ -17,13 +17,12 @@ if is_discovery_phase:
     Utils.save_maze_to_file(maze, fileName)
     drone.land()
 else:
-    object_coordinates = [(1, 1), (1, 0), (2, 0), (2, 2)]
-    object_directions = {
-        (1, 1): "South",
-        (1, 0): "South",
-        (2, 0): "West",
-        (2, 2): "West"
+    objects = {
+        (1, 0): ["South"],
+        (2, 1): ["North", "East"],
+        (2, 0): ["West"]
     }
+    object_coordinates = objects.keys()
     paths = PathFinder.astar_multi_goal_straight_preference(maze, start, object_coordinates)
     optimized_paths = []
     for i in range(len(paths)):
@@ -32,10 +31,12 @@ else:
 
     is_video_mode = True
     drone.take_off(is_video_mode)
+    drone.center_yaw()
     for i in range(len(optimized_paths)):
         drone.traverse_path(optimized_paths[i])
         current_block = drone.get_current_block()
-        print(f"(main): Performing object detection at block {tuple(current_block)} which has direction {object_directions[tuple(current_block)]}")
-        drone.perform_detection(object_directions[tuple(current_block)])
+        for object_direction in objects[tuple(current_block)]:
+            print(f"(main): Performing object detection at block: {tuple(current_block)} - direction: {object_direction}")
+            drone.perform_detection(object_direction)
 
     drone.land(is_video_mode)

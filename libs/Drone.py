@@ -44,10 +44,12 @@ class Drone:
         print("+++++ taking off")
         self.api.Plane_cmd_switch_QR(0)
         time.sleep(SLEEP_VALUE)
-        self.api.single_fly_barrier_aircraft(True)
-        time.sleep(SLEEP_VALUE)
+
         if video_mode:
             self.vid.video_mode_on()
+            time.sleep(SLEEP_VALUE)
+        else:
+            self.api.single_fly_barrier_aircraft(True)
             time.sleep(SLEEP_VALUE)
 
         self.api.single_fly_takeoff()

@@ -17,11 +17,12 @@ if is_discovery_phase:
     Utils.save_maze_to_file(maze, fileName)
     drone.land()
 else:
-    object_coordinates = [(1, 0), (2, 0), (3, 0)]
+    object_coordinates = [(1, 1), (1, 0), (2, 0), (2, 2)]
     object_directions = {
+        (1, 1): "South",
         (1, 0): "South",
         (2, 0): "West",
-        (3, 0): "South"
+        (2, 2): "West"
     }
     paths = PathFinder.astar_multi_goal_straight_preference(maze, start, object_coordinates)
     optimized_paths = []

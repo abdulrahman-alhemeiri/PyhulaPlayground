@@ -215,6 +215,7 @@ onnxdetector.py
 path.txt
 tmp.sdp
 photo/*.jpg
+detected_objects/*.jpg
 model/
 object.txt
 detect_3_object_12_11.onnx

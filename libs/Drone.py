@@ -12,8 +12,8 @@ from onnxdetector import onnxdetector
 from datetime import datetime, timezone
 
 HEIGHT = 100
-SPEED = 100
-SLEEP_VALUE = 0.8
+SPEED = 60
+SLEEP_VALUE = 0.5
 OBJECT_DETECTION_MAX_TRIES = 1000
 LOGS_ENABLED = False
 

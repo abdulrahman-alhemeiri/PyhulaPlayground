@@ -12,9 +12,14 @@ from onnxdetector import onnxdetector
 from datetime import datetime, timezone
 
 HEIGHT = 100
+SPEED = 100
 SLEEP_VALUE = 0.8
 OBJECT_DETECTION_MAX_TRIES = 1000
 LOGS_ENABLED = False
+
+def LOG(message):
+    if LOGS_ENABLED:
+        print(message)
 
 class Drone:
     def __init__(self, bearing="North"):
@@ -31,8 +36,8 @@ class Drone:
         time.sleep(2)
 
     def move_to_coordinates(self, x, y, z):
-        print(f"move_to_coordinates()::: moving to coordinates: [X: {x}, Y: {y}, Z: {z}]" if LOGS_ENABLED else "")
-        self.api.single_fly_straight_flight(x, y, z, 60)
+        LOG(f"move_to_coordinates()::: moving to coordinates: [X: {x}, Y: {y}, Z: {z}]")
+        self.api.single_fly_straight_flight(x, y, z, SPEED)
         time.sleep(SLEEP_VALUE)
 
     def take_off(self, video_mode = False):
@@ -55,48 +60,48 @@ class Drone:
             self.vid.close()
 
     def center_at_current_block(self):
-        print(f"center_at_current_block()::: centering at current block" if LOGS_ENABLED else "")
+        LOG(f"center_at_current_block()::: centering at current block")
         x, y, z = self.api.get_coordinate()
-        print(f"center_at_current_block()::: current coordinates: [X: {x}, Y: {y}, Z: {z}]" if LOGS_ENABLED else "")
+        LOG(f"center_at_current_block()::: current coordinates: [X: {x}, Y: {y}, Z: {z}]")
 
         if x < 0:
             x = 0
         if y < 0:
             y = 0
-        print(f"center_at_current_block()::: after zeroing: [X: {x}, Y: {y}, Z: {z}]" if LOGS_ENABLED else "")
+        LOG(f"center_at_current_block()::: after zeroing: [X: {x}, Y: {y}, Z: {z}]")
 
         center_x = math.floor(x / 60.0) * 60 + 15
         center_y = math.floor(y / 60.0) * 60 + 15
-        print(f"center_at_current_block()::: center coordinates: [X: {center_x}, Y: {center_y}, Z: {z}" if LOGS_ENABLED else "")
+        LOG(f"center_at_current_block()::: center coordinates: [X: {center_x}, Y: {center_y}, Z: {z}")
         self.move_to_coordinates(center_x, center_y, z)
 
     def center_yaw(self):
-        print("center_yaw()::: centering yaw" if LOGS_ENABLED else "")
+        LOG("center_yaw()::: centering yaw")
         yaw, pitch, roll = self.api.get_yaw()
-        print(f"center_yaw()::: current yaw: {yaw}" if LOGS_ENABLED else "")
+        LOG(f"center_yaw()::: current yaw: {yaw}")
         if yaw > 0:
-            print("center_yaw()::: turning right" if LOGS_ENABLED else "")
+            LOG("center_yaw()::: turning right")
             self.api.single_fly_turnleft(yaw)
         if yaw < 0:
-            print("center_yaw()::: turning left" if LOGS_ENABLED else "")
+            LOG("center_yaw()::: turning left")
             self.api.single_fly_turnright(yaw * -1)
 
     def move_to_block(self, x, y):
-        print(f"move_to_block()::: moving to block: [X: {x}, Y: {y}]" if LOGS_ENABLED else "")
+        LOG(f"move_to_block()::: moving to block: [X: {x}, Y: {y}]")
         current_block = self.get_current_block()
-        print(f"move_to_block()::: current block: [X: {current_block[0]}, Y: {current_block[0]}]" if LOGS_ENABLED else "")
+        LOG(f"move_to_block()::: current block: [X: {current_block[0]}, Y: {current_block[0]}]")
 
         if current_block[0] == x and current_block[1] == y:
-            print(f"move_to_block()::: already at target block" if LOGS_ENABLED else "")
+            LOG(f"move_to_block()::: already at target block")
             return
 
         target_x = 60 * x + 15
         target_y = 60 * y + 15
-        print(f"move_to_block()::: target coordinates: [X: {target_x}, Y: {target_y}]" if LOGS_ENABLED else "")
+        LOG(f"move_to_block()::: target coordinates: [X: {target_x}, Y: {target_y}]")
         self.move_to_coordinates(target_x, target_y, HEIGHT)
 
     def get_barriers(self):
-        print(f"get_barriers()::: getting current barriers" if LOGS_ENABLED else "")
+        LOG(f"get_barriers()::: getting current barriers")
         obstacles = self.api.Plane_getBarrier()
         result = []
         bearing_dictionary = {
@@ -135,17 +140,17 @@ class Drone:
         if obstacles["left"]:
             result.append(bearing_dictionary[self.current_bearing]["left"])
 
-        print((f"get_barriers()::: Obstacles found: " + str(result)) if LOGS_ENABLED else "")
+        LOG(f"get_barriers()::: Obstacles found: " + str(result))
 
         return result
 
     def get_current_block(self) -> List[Any]:
-        print(f"get_current_block()::: getting current block" if LOGS_ENABLED else "")
+        LOG(f"get_current_block()::: getting current block")
         x, y, z = self.api.get_coordinate()
-        print(f"get_current_block()::: current coordinates: [X: {x}, Y: {y}, Z: {z}]" if LOGS_ENABLED else "")
+        LOG(f"get_current_block()::: current coordinates: [X: {x}, Y: {y}, Z: {z}]")
         block_x = math.floor(x / 60.0)
         block_y = math.floor(y / 60.0)
-        print(f"get_current_block()::: current block: [X: {block_x}, Y: {block_y}]" if LOGS_ENABLED else "")
+        LOG(f"get_current_block()::: current block: [X: {block_x}, Y: {block_y}]")
         return [block_x, block_y]
 
     def traverse_path(self, path):
@@ -198,7 +203,7 @@ class Drone:
             if not obj_found is None:
                 timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                 filename = f"{obj_found['label']}_{cell_file_name}{timestamp}.jpg"
-                savepath = os.path.join(os.getcwd(), '../detected_objects')
+                savepath = os.path.join(os.getcwd(), 'detected_objects')
                 cv2.imwrite(os.path.join(savepath, filename), frame)
                 print(f"Found {obj_found}")
                 print(f"Saving to file: {filename}")

@@ -1,23 +1,22 @@
-import Maze
-import Drone
-import PathFinder
-import Utils
+from libs import Drone, Utils, PathFinder, Maze
 
-maze = Maze.Maze(100,100)
 start = (0, 0)
-goal = (2, 0)
 
-path = Utils.load_path_from_file("challange_1_path.txt")
-
+fileName = "maze_challenge_1.txt"
+maze = Utils.load_maze_from_file(fileName)
+is_discovery_phase = (maze is None)
 drone = Drone.Drone()
-drone.take_off()
 
-if path is  None:
+if is_discovery_phase:
+    maze = Maze.Maze(100, 100)
+    drone.take_off()
     PathFinder.discover_maze(maze, start, drone)
+    Utils.save_maze_to_file(maze, fileName)
+else:
+    goal = (2, 0)
     path = PathFinder.astar_straight_preference(maze, start, goal)
     optimized_path = Utils.optimize_path(path)
-    Utils.save_path_to_file(optimized_path)
-else:
-    drone.traverse_path(path)
+    drone.take_off()
+    drone.traverse_path(optimized_path)
 
 drone.land()

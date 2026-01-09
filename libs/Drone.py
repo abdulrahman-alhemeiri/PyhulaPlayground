@@ -11,8 +11,10 @@ from hula_video import hula_video
 from onnxdetector import onnxdetector
 from datetime import datetime, timezone
 
+HEIGHT = 100
 SLEEP_VALUE = 0.8
-OBJECT_DETECTION_MAX_TRIES = 100
+OBJECT_DETECTION_MAX_TRIES = 1000
+LOGS_ENABLED = False
 
 class Drone:
     def __init__(self, bearing="North"):
@@ -29,23 +31,16 @@ class Drone:
         time.sleep(2)
 
     def move_to_coordinates(self, x, y, z):
-        print(f"move_to_coordinates()::: moving to coordinates: [X: {x}, Y: {y}, Z: {z}]")
+        print(f"move_to_coordinates()::: moving to coordinates: [X: {x}, Y: {y}, Z: {z}]" if LOGS_ENABLED else "")
         self.api.single_fly_straight_flight(x, y, z, 60)
         time.sleep(SLEEP_VALUE)
 
-    def move_to_elevation(self, z):
-        print(f"move_to_elevation()::: moving to elevation {z}")
-        c = self.api.get_coordinate()
-        self.move_to_coordinates(c[0], c[1], z)
-
     def take_off(self, video_mode = False):
-        print("---------taking off")
+        print("+++++ taking off")
         self.api.Plane_cmd_switch_QR(0)
         time.sleep(SLEEP_VALUE)
-
         self.api.single_fly_barrier_aircraft(True)
         time.sleep(SLEEP_VALUE)
-
         if video_mode:
             self.vid.video_mode_on()
             time.sleep(SLEEP_VALUE)
@@ -54,58 +49,56 @@ class Drone:
         time.sleep(SLEEP_VALUE)
 
     def land(self, video_mode = False):
-        print("---------landing")
+        print("----- landing")
         self.api.single_fly_touchdown()
         if video_mode:
             self.vid.close()
 
     def center_at_current_block(self):
-        print("center_at_current_block()::: centering at current block")
+        print(f"center_at_current_block()::: centering at current block" if LOGS_ENABLED else "")
         x, y, z = self.api.get_coordinate()
-        print(f"center_at_current_block()::: current coordinates: [X: {x}, Y: {y}, Z: {z}]")
+        print(f"center_at_current_block()::: current coordinates: [X: {x}, Y: {y}, Z: {z}]" if LOGS_ENABLED else "")
 
         if x < 0:
             x = 0
         if y < 0:
             y = 0
-        print(f"center_at_current_block()::: after zeroing: [X: {x}, Y: {y}, Z: {z}]")
+        print(f"center_at_current_block()::: after zeroing: [X: {x}, Y: {y}, Z: {z}]" if LOGS_ENABLED else "")
 
         center_x = math.floor(x / 60.0) * 60 + 15
         center_y = math.floor(y / 60.0) * 60 + 15
-        print(f"center_at_current_block()::: center coordinates: [X: {center_x}, Y: {center_y}, Z: {z}")
+        print(f"center_at_current_block()::: center coordinates: [X: {center_x}, Y: {center_y}, Z: {z}" if LOGS_ENABLED else "")
         self.move_to_coordinates(center_x, center_y, z)
 
     def center_yaw(self):
-        print("center_yaw()::: centering yaw")
+        print("center_yaw()::: centering yaw" if LOGS_ENABLED else "")
         yaw, pitch, roll = self.api.get_yaw()
-        print(f"center_yaw()::: current yaw: {yaw}")
+        print(f"center_yaw()::: current yaw: {yaw}" if LOGS_ENABLED else "")
         if yaw > 0:
-            print("center_yaw()::: turning right")
+            print("center_yaw()::: turning right" if LOGS_ENABLED else "")
             self.api.single_fly_turnleft(yaw)
         if yaw < 0:
-            print("center_yaw()::: turning left")
+            print("center_yaw()::: turning left" if LOGS_ENABLED else "")
             self.api.single_fly_turnright(yaw * -1)
 
     def move_to_block(self, x, y):
-        print(f"move_to_block()::: moving to block: [X: {x}, Y: {y}]")
-
+        print(f"move_to_block()::: moving to block: [X: {x}, Y: {y}]" if LOGS_ENABLED else "")
         current_block = self.get_current_block()
-        print(f"move_to_block()::: current block: [X: {current_block[0]}, Y: {current_block[0]}]")
+        print(f"move_to_block()::: current block: [X: {current_block[0]}, Y: {current_block[0]}]" if LOGS_ENABLED else "")
 
         if current_block[0] == x and current_block[1] == y:
-            print(f"move_to_block()::: already at target block")
+            print(f"move_to_block()::: already at target block" if LOGS_ENABLED else "")
             return
 
         target_x = 60 * x + 15
         target_y = 60 * y + 15
-        print(f"move_to_block()::: target coordinates: [X: {target_x}, Y: {target_y}]")
-        self.move_to_coordinates(target_x, target_y, 100)
+        print(f"move_to_block()::: target coordinates: [X: {target_x}, Y: {target_y}]" if LOGS_ENABLED else "")
+        self.move_to_coordinates(target_x, target_y, HEIGHT)
 
     def get_barriers(self):
-        print(f"get_barriers()::: getting current barriers")
+        print(f"get_barriers()::: getting current barriers" if LOGS_ENABLED else "")
         obstacles = self.api.Plane_getBarrier()
         result = []
-
         bearing_dictionary = {
             "North": {
                 "forward": "forward",
@@ -142,17 +135,17 @@ class Drone:
         if obstacles["left"]:
             result.append(bearing_dictionary[self.current_bearing]["left"])
 
-        print(f"get_barriers()::: Obstacles found: " + str(result))
+        print((f"get_barriers()::: Obstacles found: " + str(result)) if LOGS_ENABLED else "")
 
         return result
 
     def get_current_block(self) -> List[Any]:
-        print(f"get_current_block()::: getting current block")
+        print(f"get_current_block()::: getting current block" if LOGS_ENABLED else "")
         x, y, z = self.api.get_coordinate()
-        print(f"get_current_block()::: current coordinates: [X: {x}, Y: {y}, Z: {z}]")
+        print(f"get_current_block()::: current coordinates: [X: {x}, Y: {y}, Z: {z}]" if LOGS_ENABLED else "")
         block_x = math.floor(x / 60.0)
         block_y = math.floor(y / 60.0)
-        print(f"get_current_block()::: current block: [X: {block_x}, Y: {block_y}]")
+        print(f"get_current_block()::: current block: [X: {block_x}, Y: {block_y}]" if LOGS_ENABLED else "")
         return [block_x, block_y]
 
     def traverse_path(self, path):
@@ -193,12 +186,11 @@ class Drone:
         return
 
     def perform_detection(self, direction):
-        print(f"+++++++++++++++Performing object detection at direction {direction}")
+        print(f"+++++ Performing object detection at direction {direction}")
         self.turn_to_bearing(direction)
         current_block = self.get_current_block()
         cell_file_name = f"Cell({current_block[0]}, {current_block[1]})_{direction}_"
         self.vid.startrecording(cell_file_name)
-        savepath = os.path.join(os.getcwd(), 'photo')
         object_found = False
         for i in range(OBJECT_DETECTION_MAX_TRIES):
             frame = self.vid.get_video()
@@ -206,6 +198,7 @@ class Drone:
             if not obj_found is None:
                 timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                 filename = f"{obj_found['label']}_{cell_file_name}{timestamp}.jpg"
+                savepath = os.path.join(os.getcwd(), '../detected_objects')
                 cv2.imwrite(os.path.join(savepath, filename), frame)
                 print(f"Found {obj_found}")
                 print(f"Saving to file: {filename}")
@@ -213,6 +206,5 @@ class Drone:
                 break
 
         print(f"Object found? {object_found}")
-
         self.vid.stoprecording()
         # self.center_yaw()

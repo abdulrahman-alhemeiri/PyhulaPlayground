@@ -13,7 +13,7 @@ class DroneMazeGUI:
         main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
 
         # Maze Size
-        ttk.Label(main_frame, text="Maze Size (NXN):").grid(row=0, column=0, sticky=tk.W, pady=5)
+        ttk.Label(main_frame, text="Maze Size (NxM):").grid(row=0, column=0, sticky=tk.W, pady=5)
         self.maze_size_entry = ttk.Entry(main_frame, width=50)
         self.maze_size_entry.grid(row=0, column=1, sticky=(tk.W, tk.E), pady=5)
         self.maze_size_entry.insert(0, "5x5")  # Default value
@@ -28,17 +28,17 @@ class DroneMazeGUI:
         ttk.Label(main_frame, text="Drone Initial Bearing:").grid(row=2, column=0, sticky=tk.W, pady=5)
         self.bearing_var = tk.StringVar()
         self.bearing_dropdown = ttk.Combobox(main_frame, textvariable=self.bearing_var,
-                                             values=["North", "South", "East", "West"],
+                                             values=["North", "West", "South", "East"],
                                              state="readonly", width=47)
         self.bearing_dropdown.grid(row=2, column=1, sticky=(tk.W, tk.E), pady=5)
         self.bearing_dropdown.set("North")  # Default value
 
         # Objects Locations
-        ttk.Label(main_frame, text="Objects Locations (x,y):").grid(row=3, column=0, sticky=tk.W, pady=5)
+        ttk.Label(main_frame, text="Objects Locations (x,y,direction):").grid(row=3, column=0, sticky=tk.W, pady=5)
         self.objects_text = scrolledtext.ScrolledText(main_frame, width=50, height=6)
         self.objects_text.grid(row=4, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=5)
         # Default values
-        self.objects_text.insert("1.0", "1,2\n2,3\n3,4\n3,3")
+        self.objects_text.insert("1.0", "1,2,North\n2,3,West\n3,4,South\n3,3,East")
 
         # Start Button
         self.start_button = ttk.Button(main_frame, text="Start", command=self.on_start_clicked)

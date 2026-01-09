@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 
 HEIGHT = 100
 SPEED = 60
-SLEEP_VALUE = 0.5
+SLEEP_VALUE = 0.1
 OBJECT_DETECTION_MAX_TRIES = 1000
 LOGS_ENABLED = False
 

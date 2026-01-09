@@ -1,6 +1,6 @@
 import json
 import os
-from Maze import Maze
+from libs.Maze import Maze
 
 def save_maze_to_file(maze, filename="maze.txt"):
     maze_data = {

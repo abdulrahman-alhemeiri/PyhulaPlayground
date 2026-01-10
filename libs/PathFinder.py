@@ -1,6 +1,5 @@
 import heapq
 
-
 def heuristic(cell, goal):
     """Manhattan distance heuristic"""
     return abs(cell[0] - goal[0]) + abs(cell[1] - goal[1])

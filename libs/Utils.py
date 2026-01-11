@@ -30,7 +30,7 @@ def load_maze_from_file(filename="maze.txt"):
     print(f"Maze loaded: {maze.width}x{maze.height} with {len(maze.walls)} walls")
     return maze
 
-def optimize_path(path):
+def optimized_path(path):
 
     if len(path) <= 2:
         return path
@@ -56,3 +56,9 @@ def optimize_path(path):
     optimized.append(path[-1])  # Always keep end point
 
     return optimized
+
+def optimized_paths(paths):
+    result = []
+    for i in range(len(paths)):
+        optimized = optimized_path(paths[i])
+        result.append(optimized)

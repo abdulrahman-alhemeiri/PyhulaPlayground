@@ -146,14 +146,14 @@ class Drone:
 
         return result
 
-    def get_current_block(self) -> List[Any]:
+    def get_current_block(self) -> tuple[Any, Any]:
         LOG(f"get_current_block()::: getting current block")
         x, y, z = self.api.get_coordinate()
         LOG(f"get_current_block()::: current coordinates: [X: {x}, Y: {y}, Z: {z}]")
         block_x = math.floor(x / 60.0)
         block_y = math.floor(y / 60.0)
         LOG(f"get_current_block()::: current block: [X: {block_x}, Y: {block_y}]")
-        return [block_x, block_y]
+        return block_x, block_y
 
     def traverse_path(self, path):
         for x, y in path:
@@ -192,7 +192,7 @@ class Drone:
         self.current_bearing = direction
         return
 
-    def perform_detection(self, direction):
+    def perform_detection(self, direction, on_object_found=None, on_progress=None):
         print(f"+++++ Performing object detection at direction {direction}")
         self.turn_to_bearing(direction)
         current_block = self.get_current_block()
@@ -207,9 +207,10 @@ class Drone:
                 filename = f"{obj_found['label']}_{cell_file_name}{timestamp}.jpg"
                 savepath = os.path.join(os.getcwd(), 'detected_objects')
                 cv2.imwrite(os.path.join(savepath, filename), frame)
-                print(f"Found {obj_found}")
+                print(f"Found {obj_found} after {i} tries")
                 print(f"Saving to file: {filename}")
                 object_found = True
+                on_object_found(obj_found['label'], direction, current_block)
                 break
 
         print(f"Object found? {object_found}")

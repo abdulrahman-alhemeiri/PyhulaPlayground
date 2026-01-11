@@ -1,6 +1,6 @@
 import json
 import os
-from libs.Maze import Maze
+from Maze import Maze
 
 def save_maze_to_file(maze, filename="maze.txt"):
     maze_data = {
@@ -62,3 +62,4 @@ def optimized_paths(paths):
     for i in range(len(paths)):
         optimized = optimized_path(paths[i])
         result.append(optimized)
+    return result

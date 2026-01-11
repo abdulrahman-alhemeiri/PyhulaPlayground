@@ -1,5 +1,4 @@
-from libs.Drone import Drone
-from libs import Utils, PathFinder, Maze
+from PyhulaPlayground import Maze, PathFinder, Utils
 
 # start = (0, 0)
 # current_bearing = "North"

@@ -1,4 +1,4 @@
-from libs.Drone import Drone
+from PyhulaPlayground.Drone import Drone
 
 drone = Drone()
 drone.take_off()

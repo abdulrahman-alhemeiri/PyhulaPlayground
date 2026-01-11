@@ -1,10 +1,10 @@
 """Main application controller"""
 import tkinter as tk
-from libs import Utils, PathFinder, Maze
-from libs.Challenge2Gui import Gui
-import libs.Challenge2Gui as Challenge2Gui
-from libs.Drone import Drone
-from libs.Utils import optimized_paths
+from PyhulaPlayground import Maze, PathFinder, Utils
+from PyhulaPlayground.Challenge2Gui import Gui
+import PyhulaPlayground.Challenge2Gui as Challenge2Gui
+from PyhulaPlayground.Drone import Drone
+from PyhulaPlayground.Utils import optimized_paths
 
 file_name = "maze_challenge_2.txt"
 
@@ -32,6 +32,7 @@ class Challenge2Controller:
         self.gui.write_output(f"Start: {start}, Bearing: {bearing}\n")
 
         self.maze = Maze.Maze(width, height)
+        self.drone = Drone(bearing)
         self.drone.take_off()
         PathFinder.discover_maze(self.maze, start, self.drone)
         Utils.save_maze_to_file(self.maze, file_name)
@@ -42,7 +43,7 @@ class Challenge2Controller:
         start = params['start']
         bearing = params['bearing']
         objects = params['objects']
-        self.num_objects = len(objects)
+        self.num_objects = sum(len(v) for v in objects.values())
 
         self.gui.write_output("=== Challenge 2 Maze Solving (Race) Started ===\n")
         self.gui.write_output(f"Start: {start}, Bearing: {bearing}\n")

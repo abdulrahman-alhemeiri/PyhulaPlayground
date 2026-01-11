@@ -7,13 +7,13 @@ import sys
 import cv2
 import os
 
-from hula_video import hula_video
-from onnxdetector import onnxdetector
+from .hula_video import hula_video
+from .onnxdetector import onnxdetector
 from datetime import datetime, timezone
 
 HEIGHT = 100
 SPEED = 60
-SLEEP_VALUE = 0.1
+SLEEP_VALUE = 0.8
 OBJECT_DETECTION_MAX_TRIES = 1000
 LOGS_ENABLED = False
 
@@ -146,7 +146,7 @@ class Drone:
 
         return result
 
-    def get_current_block(self) -> tuple[Any, Any]:
+    def get_current_block(self):
         LOG(f"get_current_block()::: getting current block")
         x, y, z = self.api.get_coordinate()
         LOG(f"get_current_block()::: current coordinates: [X: {x}, Y: {y}, Z: {z}]")

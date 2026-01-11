@@ -1,4 +1,4 @@
-from libs import Drone, Utils, PathFinder, Maze
+from PyhulaPlayground import Maze, Drone, PathFinder, Utils
 
 start = (0, 0)
 
@@ -13,9 +13,9 @@ if is_discovery_phase:
     PathFinder.discover_maze(maze, start, drone)
     Utils.save_maze_to_file(maze, fileName)
 else:
-    goal = (2, 0)
+    goal = (0, 4)
     path = PathFinder.astar_straight_preference(maze, start, goal)
-    optimized_path = Utils.optimize_path(path)
+    optimized_path = Utils.optimized_path(path)
     drone.take_off()
     drone.traverse_path(optimized_path)
 

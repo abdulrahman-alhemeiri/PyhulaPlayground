@@ -1,8 +1,7 @@
 import time
 import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
-import winsound
-
+from typing import Dict, List
 
 def alert_race_done():
     messagebox.showinfo("Success", "Object detection race completed successfully!")
@@ -20,20 +19,20 @@ class Gui:
 
     def _create_widgets(self):
         # Create main frame with padding
-        main_frame = ttk.Frame(root, padding="10")
+        main_frame = ttk.Frame(self.root, padding="10")
         main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
 
         # Maze Size
         ttk.Label(main_frame, text="Maze Size (NxM):").grid(row=0, column=0, sticky=tk.W, pady=5)
         self.maze_size_entry = ttk.Entry(main_frame, width=50)
         self.maze_size_entry.grid(row=0, column=1, sticky=(tk.W, tk.E), pady=5)
-        self.maze_size_entry.insert(0, "5x5")  # Default value
+        self.maze_size_entry.insert(0, "4x5")  # Default value
 
         # Drone Initial Location
         ttk.Label(main_frame, text="Drone Initial Location:").grid(row=1, column=0, sticky=tk.W, pady=5)
         self.initial_location_entry = ttk.Entry(main_frame, width=50)
         self.initial_location_entry.grid(row=1, column=1, sticky=(tk.W, tk.E), pady=5)
-        self.initial_location_entry.insert(0, "0,2")  # Default value
+        self.initial_location_entry.insert(0, "0,0")  # Default value
 
         # Drone Initial Bearing (Dropdown)
         ttk.Label(main_frame, text="Drone Initial Bearing:").grid(row=2, column=0, sticky=tk.W, pady=5)
@@ -49,7 +48,7 @@ class Gui:
         self.objects_text = scrolledtext.ScrolledText(main_frame, width=50, height=6)
         self.objects_text.grid(row=4, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=5)
         # Default values
-        self.objects_text.insert("1.0", "1,2,North\n2,3,West\n3,4,South\n3,3,East")
+        self.objects_text.insert("1.0", "1,4,East\n2,3,West\n3,4,South\n3,3,East")
 
         # Start Discovery Button
         self.start_discovery_button = ttk.Button(main_frame, text="Start Discovery", command=self._on_start_discovery_clicked)
@@ -68,8 +67,8 @@ class Gui:
 
         # Configure grid weights for resizing
         main_frame.columnconfigure(1, weight=1)
-        root.columnconfigure(0, weight=1)
-        root.rowconfigure(0, weight=1)
+        self.root.columnconfigure(0, weight=1)
+        self.root.rowconfigure(0, weight=1)
 
     def _on_start_discovery_clicked(self):
         try:
@@ -117,71 +116,75 @@ class Gui:
             self.write_output(f"Error in on_start_discovery_clicked(): {str(e)}\n")
 
     def _on_start_race_clicked(self):
-        try:
-            initial_location = self.initial_location_entry.get()
-            x, y = map(int, initial_location.split(','))
-            start = (x, y)
+        # try:
+        initial_location = self.initial_location_entry.get()
+        x, y = map(int, initial_location.split(','))
+        start = (x, y)
 
-            bearing = self.bearing_var.get()
+        bearing = self.bearing_var.get()
 
-            objects_input = self.objects_text.get("1.0", tk.END).strip()
-            object_data = []
+        objects_input = self.objects_text.get("1.0", tk.END).strip()
+        object_data = {}
 
-            for line in objects_input.split('\n'):
-                if line.strip():
-                    parts = [part.strip() for part in line.split(',')]
+        for line in objects_input.split('\n'):
+            if line.strip():
+                parts = [part.strip() for part in line.split(',')]
 
-                    if len(parts) != 3:
-                        self.write_output(f"Invalid object format: '{line}'. Expected format: x,y,direction\n\n")
-                        return
+                if len(parts) != 3:
+                    self.write_output(f"Invalid object format: '{line}'. Expected format: x,y,direction\n\n")
+                    return
 
-                    obj_x = int(parts[0])
-                    obj_y = int(parts[1])
-                    obj_direction = parts[2]
+                obj_x = int(parts[0])
+                obj_y = int(parts[1])
+                obj_direction = parts[2]
 
-                    valid_directions = ["North", "West", "South", "East"]
-                    if obj_direction not in valid_directions:
-                        self.write_output(f"Invalid direction '{obj_direction}' in line '{line}'. Must be one of: {valid_directions}\n\n")
-                        return
+                valid_directions = ["North", "West", "South", "East"]
+                if obj_direction not in valid_directions:
+                    self.write_output(f"Invalid direction '{obj_direction}' in line '{line}'. Must be one of: {valid_directions}\n\n")
+                    return
 
-                    object_data.append(((obj_x, obj_y), obj_direction))
+                # object_data.append(((obj_x, obj_y), obj_direction))
+                obj_coordinates_tuple = (obj_x, obj_y)
+                if not obj_coordinates_tuple in object_data:
+                    object_data[obj_coordinates_tuple] = []
+                object_data[obj_coordinates_tuple].append(obj_direction)
 
-            if len(object_data) == 0:
-                self.write_output(f"No objects found.\n\n")
-                return
+        if len(object_data) == 0:
+            self.write_output(f"No objects found.\n\n")
+            return
 
-            params = {
-                'start': start,
-                'bearing': bearing,
-                'objects': object_data
-            }
+        params = {
+            'start': start,
+            'bearing': bearing,
+            'objects': object_data
+        }
 
-            message = (
-                f"Start Position: {start}\n"
-                f"Drone Initial Bearing: {bearing}\n"
-                f"Objects: {len(object_data)}\n\n"
-                f"Make sure you have finished discovery for the current maze setup.\n"
-                f"Make sure it is safe and you're clear for takeoff.\n\n"
-                f"Start race?"
-            )
+        message = (
+            f"Start Position: {start}\n"
+            f"Drone Initial Bearing: {bearing}\n"
+            f"Objects: {len(object_data)}\n\n"
+            f"Make sure you have finished discovery for the current maze setup.\n"
+            f"Make sure it is safe and you're clear for takeoff.\n\n"
+            f"Start race?"
+        )
 
-            result = messagebox.askokcancel(
-                "Start Race?",
-                message
-            )
+        result = messagebox.askokcancel(
+            "Start Race?",
+            message
+        )
 
-            if not result:
-                return
+        if not result:
+            return
 
-            self.clear_output()
-            self.write_output(f"Started race...\n\n")
+        self.clear_output()
+        self.write_output(f"Started race...\n\n")
 
-            self.on_start_race_callback_callback(params)
+        self.on_start_race_callback(params)
 
-            self.write_output(f"Race completed.\n\n")
+        self.write_output(f"Race completed.\n\n")
 
-        except Exception as e:
-            self.write_output(f"Error in on_start_race_clicked(): {str(e)}\n\n")
+        # except Exception as e:
+        #     self.write_output(f"Error in on_start_race_clicked(): {repr(e)}\n\n")
 
     def write_output(self, text):
         self.output_text.config(state='normal')

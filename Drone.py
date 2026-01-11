@@ -15,9 +15,9 @@ SPEED = 60
 SLEE_BASE_VALUE = 0.4
 SLEEP_INCREMENT_VALUE = 0.1
 OBJECT_DETECTION_MAX_TRIES = 1000
-LOGS_ENABLED = False
 SLEEP_VALUE = 0.8
 
+LOGS_ENABLED = False
 def LOG(message):
     if LOGS_ENABLED:
         print(message)
@@ -32,7 +32,7 @@ class Drone:
             print("connection to station by wifi")
         self.api.Plane_cmd_camera_angle(4, 0)
         self.vid = hula_video(hula_api = self.api, display = False)
-        self.huladetector = onnxdetector(model="detect_3_object_12_11.onnx", label="object.txt", confidence_thres=0.65)
+        self.huladetector = onnxdetector(model="detect_3_object_12_11.onnx", label="object.txt", confidence_thres=0.4)
         self.current_bearing = bearing
         time.sleep(2)
 
@@ -155,7 +155,11 @@ class Drone:
         x, y, z = self.api.get_coordinate()
         LOG(f"get_current_block()::: current coordinates: [X: {x}, Y: {y}, Z: {z}]")
         block_x = math.floor(x / 60.0)
+        if block_x < 0:
+            block_x = 0
         block_y = math.floor(y / 60.0)
+        if block_y < 0:
+            block_y = 0
         LOG(f"get_current_block()::: current block: [X: {block_x}, Y: {block_y}]")
         return block_x, block_y
 
@@ -201,22 +205,27 @@ class Drone:
         self.turn_to_bearing(direction)
         current_block = self.get_current_block()
         cell_file_name = f"Cell({current_block[0]}, {current_block[1]})_{direction}_"
+        self.center_at_current_block()
         self.vid.startrecording(cell_file_name)
         object_found = False
         for i in range(OBJECT_DETECTION_MAX_TRIES):
             frame = self.vid.get_video()
+            LOG(f"started self.huladetector.detect(frame)")
             obj_found, frame = self.huladetector.detect(frame)
+            LOG(f"ended self.huladetector.detect(frame)")
+
             if not obj_found is None:
                 timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                 filename = f"{obj_found['label']}_{cell_file_name}{timestamp}.jpg"
                 savepath = os.path.join(os.getcwd(), 'detected_objects')
                 cv2.imwrite(os.path.join(savepath, filename), frame)
-                print(f"Found {obj_found} after {i} tries")
+                print(f"Found {obj_found} after {i + 1} tries")
                 print(f"Saving to file: {filename}")
                 object_found = True
                 on_object_found(obj_found['label'], direction, current_block)
                 break
 
-        print(f"Object found? {object_found}")
+        if not object_found:
+            print(f"Object NOT FOUND!")
+
         self.vid.stoprecording()
-        # self.center_yaw()

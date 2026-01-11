@@ -1,5 +1,10 @@
 import heapq
 
+LOGS_ENABLED = False
+def LOG(message):
+    if LOGS_ENABLED:
+        print(message)
+
 def heuristic(cell, goal):
     """Manhattan distance heuristic"""
     return abs(cell[0] - goal[0]) + abs(cell[1] - goal[1])
@@ -39,8 +44,8 @@ def astar_straight_preference(maze, start, goal, turn_penalty=0.001):
 
         if current == goal:
             reconstructed_path = reconstruct_path(came_from, current)
-            print(f"Path found: {reconstructed_path}")
-            print(f"Length: {len(reconstructed_path) - 1} steps")
+            LOG(f"Path found: {reconstructed_path}")
+            LOG(f"Length: {len(reconstructed_path) - 1} steps")
             return reconstructed_path
 
         for neighbor in maze.get_neighbors(current):

@@ -116,7 +116,6 @@ class Gui:
             self.write_output(f"Error in on_start_discovery_clicked(): {str(e)}\n")
 
     def _on_start_race_clicked(self):
-        # try:
         initial_location = self.initial_location_entry.get()
         x, y = map(int, initial_location.split(','))
         start = (x, y)
@@ -143,7 +142,6 @@ class Gui:
                     self.write_output(f"Invalid direction '{obj_direction}' in line '{line}'. Must be one of: {valid_directions}\n\n")
                     return
 
-                # object_data.append(((obj_x, obj_y), obj_direction))
                 obj_coordinates_tuple = (obj_x, obj_y)
                 if not obj_coordinates_tuple in object_data:
                     object_data[obj_coordinates_tuple] = []
@@ -182,9 +180,6 @@ class Gui:
         self.on_start_race_callback(params)
 
         self.write_output(f"Race completed.\n\n")
-
-        # except Exception as e:
-        #     self.write_output(f"Error in on_start_race_clicked(): {repr(e)}\n\n")
 
     def write_output(self, text):
         self.output_text.config(state='normal')

@@ -63,3 +63,14 @@ def optimized_paths(paths):
         optimized = optimized_path(paths[i])
         result.append(optimized)
     return result
+
+def length(coordinate1, coordinate2):
+    dx = coordinate1[0] - coordinate2[0]
+    dy = coordinate1[1] - coordinate2[1]
+
+    if dx == 0:
+        return abs(dy)
+    elif dy == 0:
+        return abs(dx)
+
+    return 1

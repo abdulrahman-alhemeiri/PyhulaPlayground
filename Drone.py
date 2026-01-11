@@ -1,21 +1,22 @@
-from typing import List, Any
-
 import pyhula
 import time
 import math
 import sys
 import cv2
 import os
+import Utils
 
 from .hula_video import hula_video
 from .onnxdetector import onnxdetector
 from datetime import datetime, timezone
 
-HEIGHT = 100
+HEIGHT = 95
 SPEED = 60
-SLEEP_VALUE = 0.8
+SLEE_BASE_VALUE = 0.4
+SLEEP_INCREMENT_VALUE = 0.1
 OBJECT_DETECTION_MAX_TRIES = 1000
 LOGS_ENABLED = False
+SLEEP_VALUE = 0.8
 
 def LOG(message):
     if LOGS_ENABLED:
@@ -35,10 +36,10 @@ class Drone:
         self.current_bearing = bearing
         time.sleep(2)
 
-    def move_to_coordinates(self, x, y, z):
+    def move_to_coordinates(self, x, y, z, sleep=SLEEP_VALUE):
         LOG(f"move_to_coordinates()::: moving to coordinates: [X: {x}, Y: {y}, Z: {z}]")
         self.api.single_fly_straight_flight(x, y, z, SPEED)
-        time.sleep(SLEEP_VALUE)
+        time.sleep(sleep)
 
     def take_off(self, video_mode = False):
         print("+++++ taking off")
@@ -97,10 +98,13 @@ class Drone:
             LOG(f"move_to_block()::: already at target block")
             return
 
+        movement_length = Utils.length(current_block, (x,y))
+        sleep_value = SLEE_BASE_VALUE + (movement_length * SLEEP_INCREMENT_VALUE)
+
         target_x = 60 * x + 15
         target_y = 60 * y + 15
         LOG(f"move_to_block()::: target coordinates: [X: {target_x}, Y: {target_y}]")
-        self.move_to_coordinates(target_x, target_y, HEIGHT)
+        self.move_to_coordinates(target_x, target_y, HEIGHT, sleep_value)
 
     def get_barriers(self):
         LOG(f"get_barriers()::: getting current barriers")

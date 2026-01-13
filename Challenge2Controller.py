@@ -86,11 +86,24 @@ class Challenge2Controller:
             self.on_progress(f"Traversing segment {i + 1}/{len(paths)}...\n")
             self.drone.traverse_path(paths[i])
 
+            # current_block = self.drone.get_current_block()
+            # if current_block[0] >= maze.width:
+            #     current_block[0] = maze.width - 1
+            # if current_block[1] >= maze.height:
+            #     current_block[1] = maze.height - 1
+
+            # After:
             current_block = self.drone.get_current_block()
-            if current_block[0] >= maze.width:
-                current_block[0] = maze.width - 1
-            if current_block[1] >= maze.height:
-                current_block[1] = maze.height - 1
+            current_block_x = current_block[0]
+            current_block_y = current_block[1]
+
+            # Clamp coordinates to maze bounds
+            if current_block_x >= maze.width:
+                current_block_x = maze.width - 1
+            if current_block_y >= maze.height:
+                current_block_y = maze.height - 1
+
+            current_block = (current_block_x, current_block_y)
 
             for object_direction in objects[current_block]:
                 self.on_progress(f"Performing object detecting at {current_block} facing {object_direction}...\n")

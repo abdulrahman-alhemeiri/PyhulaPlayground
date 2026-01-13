@@ -7,7 +7,7 @@ from PyhulaPlayground.Utils import optimized_paths
 
 file_name = "maze_challenge_1.txt"
 
-class Challenge2Controller:
+class Challenge1Controller:
     def __init__(self):
         self.gui = None
         self.maze = None

@@ -2,6 +2,7 @@ import time
 import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
 from typing import Dict, List
+import threading
 
 def alert_race_done():
     messagebox.showinfo("Success", "Object detection race completed successfully!")
@@ -108,12 +109,27 @@ class Gui:
             self.clear_output()
             self.write_output(f"Started discovery...\n\n")
 
-            self.on_start_discovery_callback(params)
-
-            self.write_output(f"Discovery completed.\n\n")
+            self.start_discovery_button.config(state='disabled')
+            self.start_race_button.config(state='disabled')
+            thread = threading.Thread(target=self._run_discovery_thread, args=(params,))
+            thread.daemon = True
+            thread.start()
 
         except Exception as e:
             self.write_output(f"Error in on_start_discovery_clicked(): {str(e)}\n")
+
+    def _run_discovery_thread(self, params):
+        try:
+            self.on_start_discovery_callback(params)
+            self.write_output_threadsafe(f"Discovery completed.\n\n")
+        except Exception as e:
+            self.write_output_threadsafe(f"ERROR: {str(e)}\n")
+            import traceback
+            traceback.print_exc()
+        finally:
+            # Re-enable buttons from main thread
+            self.root.after(0, lambda: self.start_discovery_button.config(state='normal'))
+            self.root.after(0, lambda: self.start_race_button.config(state='normal'))
 
     def _on_start_race_clicked(self):
         initial_location = self.initial_location_entry.get()
@@ -177,15 +193,34 @@ class Gui:
         self.clear_output()
         self.write_output(f"Started race...\n\n")
 
-        self.on_start_race_callback(params)
+        self.start_race_button.config(state='disabled')
+        self.start_discovery_button.config(state='disabled')
 
-        self.write_output(f"Race completed.\n\n")
+        thread = threading.Thread(target=self._run_race_thread, args=(params,))
+        thread.daemon = True
+        thread.start()
+
+    def _run_race_thread(self, params):
+        try:
+            self.on_start_race_callback(params)
+            self.write_output_threadsafe(f"Race completed.\n\n")
+        except Exception as e:
+            self.write_output_threadsafe(f"ERROR: {str(e)}\n")
+            import traceback
+            traceback.print_exc()
+        finally:
+            # Re-enable buttons from main thread
+            self.root.after(0, lambda: self.start_race_button.config(state='normal'))
+            self.root.after(0, lambda: self.start_discovery_button.config(state='normal'))
 
     def write_output(self, text):
         self.output_text.config(state='normal')
         self.output_text.insert(tk.END, text)
         self.output_text.see(tk.END)
         self.output_text.config(state='disabled')
+
+    def write_output_threadsafe(self, text):
+        self.root.after(0, lambda: self.write_output(text))
 
     def clear_output(self):
         self.output_text.config(state='normal')

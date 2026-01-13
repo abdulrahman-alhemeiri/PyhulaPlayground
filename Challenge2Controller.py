@@ -1,4 +1,3 @@
-"""Main application controller"""
 import tkinter as tk
 from PyhulaPlayground import Maze, PathFinder, Utils
 from PyhulaPlayground.Challenge2Gui import Gui
@@ -28,15 +27,27 @@ class Challenge2Controller:
         start = params['start']
         bearing = params['bearing']
 
-        self.gui.write_output("=== Challenge 2 Maze Discovery Started ===\n")
-        self.gui.write_output(f"Start: {start}, Bearing: {bearing}\n")
+        self.on_progress("=== Challenge 2 Maze Discovery Started ===\n")
+        self.on_progress(f"Start: {start}, Bearing: {bearing}\n\n")
 
         self.maze = Maze.Maze(width, height)
+
         self.drone = Drone(bearing)
+
+        self.on_progress("Taking off...\n")
         self.drone.take_off()
+
+        self.on_progress("Starting maze discovery...\n")
         PathFinder.discover_maze(self.maze, start, self.drone)
+
+        self.on_progress("Saving maze to file...\n")
         Utils.save_maze_to_file(self.maze, file_name)
+
+        self.on_progress("Landing...\n")
         self.drone.land()
+
+        self.on_progress("Discovery complete!\n")
+
         return
 
     def on_start_race(self, params):
@@ -45,28 +56,34 @@ class Challenge2Controller:
         objects = params['objects']
         self.num_objects = sum(len(v) for v in objects.values())
 
-        self.gui.write_output("=== Challenge 2 Maze Solving (Race) Started ===\n")
-        self.gui.write_output(f"Start: {start}, Bearing: {bearing}\n")
-        self.gui.write_output(f"Objects to find: {self.num_objects}\n\n")
+        self.on_progress("=== Challenge 2 Maze Solving (Race) Started ===\n")
+        self.on_progress(f"Start: {start}, Bearing: {bearing}\n")
+        self.on_progress(f"Objects to find: {self.num_objects}\n\n")
 
+        self.on_progress("loading maze...\n")
         maze = Utils.load_maze_from_file(file_name)
         maze_file_not_found = (maze is None)
         if maze_file_not_found:
-            self.gui.write_output("\n***WARNING***: Maze file not found.\n")
+            self.on_progress("\n***WARNING***: Maze file not found.\n")
             return
 
         self.found_count = 0
 
         self.drone = Drone(bearing)
         object_coordinates = objects.keys()
+
+        self.on_progress("Calculating optimal path...\n")
         paths = PathFinder.astar_multi_goal_straight_preference(maze, start, object_coordinates)
+        self.on_progress(f"Path calculated: {len(paths)} segments\n\n")
         paths = optimized_paths(paths)
 
         is_video_mode = True
+        self.on_progress("Taking off...\n")
         self.drone.take_off(is_video_mode)
         # self.drone.center_yaw() # TODO: Risk flag
 
         for i in range(len(paths)):
+            self.on_progress(f"Traversing segment {i + 1}/{len(paths)}...\n")
             self.drone.traverse_path(paths[i])
 
             current_block = self.drone.get_current_block()
@@ -76,23 +93,25 @@ class Challenge2Controller:
                 current_block[1] = maze.height - 1
 
             for object_direction in objects[current_block]:
+                self.on_progress(f"Performing object detecting at {current_block} facing {object_direction}...\n")
                 print(f"(main): Performing object detection at block: {current_block} - direction: {object_direction}")
                 self.drone.perform_detection(object_direction, on_object_found=self.on_object_found)
 
+        self.on_progress("Landing...\n")
         self.drone.land(is_video_mode)
 
+        self.on_progress("\n=== Race Complete ===\n")
+
     def on_object_found(self, object_name, direction, current_block):
-        """Callback when object is detected"""
         self.found_count += 1
-        self.gui.write_output(f"{self.found_count}. Found a {object_name} at ({current_block[0]},{current_block[1]}) in {direction} direction\n")
+        msg = f"{self.found_count}. Found a {object_name} at ({current_block[0]},{current_block[1]}) in {direction} direction\n"
+        self.on_progress(msg)
         if self.found_count == self.num_objects:
-            Challenge2Gui.alert_race_done()
+            self.gui.root.after(0, Challenge2Gui.alert_race_done)
 
     def on_progress(self, message):
-        """Callback for progress updates"""
-        # Optional: update GUI with progress
-        pass
-
+        if self.gui:
+            self.gui.write_output_threadsafe(message)
 
 if __name__ == "__main__":
     controller = Challenge2Controller()

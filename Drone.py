@@ -10,20 +10,25 @@ from .hula_video import hula_video
 from .onnxdetector import onnxdetector
 from datetime import datetime, timezone
 
-HEIGHT = 95
-SPEED = 60
-SLEE_BASE_VALUE = 0.4
+DEFAULT_HEIGHT = 95
+DESCENDING_INCREMENTAL_VALUE = 3
+MINIMUM_HEIGHT = 65
+LAST_STEP_HEIGHT = 40
+
+SPEED = 100
+SLEEP_BASE_VALUE = 0.4
 SLEEP_INCREMENT_VALUE = 0.1
-OBJECT_DETECTION_MAX_TRIES = 1000
 SLEEP_VALUE = 0.8
 
-LOGS_ENABLED = False
+OBJECT_DETECTION_MAX_TRIES = 100
+
+LOGS_ENABLED = True
 def LOG(message):
     if LOGS_ENABLED:
         print(message)
 
 class Drone:
-    def __init__(self, bearing="North"):
+    def __init__(self, bearing="North", challenge=1):
         self.api = pyhula.UserApi()
         if not self.api.connect():
             print("connect error!!!!!!!")
@@ -34,6 +39,9 @@ class Drone:
         self.vid = hula_video(hula_api = self.api, display = False)
         self.huladetector = onnxdetector(model="detect_3_object_12_11.onnx", label="object.txt", confidence_thres=0.4)
         self.current_bearing = bearing
+        self.challenge_number = challenge
+        self.challenge_height = DEFAULT_HEIGHT
+        print(f"Started challenge: {self.challenge_number}")
         time.sleep(2)
 
     def move_to_coordinates(self, x, y, z, sleep=SLEEP_VALUE):
@@ -41,25 +49,26 @@ class Drone:
         self.api.single_fly_straight_flight(x, y, z, SPEED)
         time.sleep(sleep)
 
-    def take_off(self, video_mode = False):
+    def take_off(self):
         print("+++++ taking off")
         self.api.Plane_cmd_switch_QR(0)
         time.sleep(SLEEP_VALUE)
 
-        if video_mode:
-            self.vid.video_mode_on()
-            time.sleep(SLEEP_VALUE)
-        else:
+        if self.challenge_number == 1:
             self.api.single_fly_barrier_aircraft(True)
-            time.sleep(SLEEP_VALUE)
+
+        if self.challenge_number == 2:
+            self.vid.video_mode_on()
+
+        time.sleep(SLEEP_VALUE)
 
         self.api.single_fly_takeoff()
         time.sleep(SLEEP_VALUE)
 
-    def land(self, video_mode = False):
+    def land(self):
         print("----- landing")
         self.api.single_fly_touchdown()
-        if video_mode:
+        if self.challenge_number == 2:
             self.vid.close()
 
     def center_at_current_block(self):
@@ -89,7 +98,7 @@ class Drone:
             LOG("center_yaw()::: turning left")
             self.api.single_fly_turnright(yaw * -1)
 
-    def move_to_block(self, x, y):
+    def move_to_block(self, x, y, z=DEFAULT_HEIGHT, is_last_step=False):
         LOG(f"move_to_block()::: moving to block: [X: {x}, Y: {y}]")
         current_block = self.get_current_block()
         LOG(f"move_to_block()::: current block: [X: {current_block[0]}, Y: {current_block[0]}]")
@@ -99,12 +108,14 @@ class Drone:
             return
 
         movement_length = Utils.length(current_block, (x,y))
-        sleep_value = SLEE_BASE_VALUE + (movement_length * SLEEP_INCREMENT_VALUE)
+        sleep_value = SLEEP_BASE_VALUE + (movement_length * SLEEP_INCREMENT_VALUE)
 
         target_x = 60 * x + 15
         target_y = 60 * y + 15
-        LOG(f"move_to_block()::: target coordinates: [X: {target_x}, Y: {target_y}]")
-        self.move_to_coordinates(target_x, target_y, HEIGHT, sleep_value)
+        LOG(f"move_to_block()::: target coordinates: [X: {target_x}, Y: {target_y}], Z:{z}")
+        if is_last_step:
+            z = LAST_STEP_HEIGHT
+        self.move_to_coordinates(target_x, target_y, z, sleep_value)
 
     def get_barriers(self):
         LOG(f"get_barriers()::: getting current barriers")
@@ -164,8 +175,22 @@ class Drone:
         return block_x, block_y
 
     def traverse_path(self, path):
-        for x, y in path:
-            self.move_to_block(x, y)
+        if self.challenge_number == 1:
+            index = 0
+            for x, y in path:
+                self.challenge_height = self.challenge_height - DESCENDING_INCREMENTAL_VALUE
+                if self.challenge_height < MINIMUM_HEIGHT:
+                    self.challenge_height = MINIMUM_HEIGHT
+
+                is_last_step = False
+                if (index == len(path) - 1):
+                    is_last_step = True
+                self.move_to_block(x, y, self.challenge_height, is_last_step)
+                index = index + 1
+
+        if self.challenge_number == 2:
+            for x, y in path:
+                self.move_to_block(x, y, DEFAULT_HEIGHT)
 
     def turn_to_bearing(self, direction):
         if self.current_bearing == "North":

@@ -32,7 +32,8 @@ class Challenge2Controller:
 
         self.maze = Maze.Maze(width, height)
 
-        self.drone = Drone(bearing)
+        challenge_number = 2
+        self.drone = Drone(bearing, challenge_number)
 
         self.on_progress("Taking off...\n")
         self.drone.take_off()
@@ -69,7 +70,8 @@ class Challenge2Controller:
 
         self.found_count = 0
 
-        self.drone = Drone(bearing)
+        challenge_number = 2
+        self.drone = Drone(bearing, challenge_number)
         object_coordinates = objects.keys()
 
         self.on_progress("Calculating optimal path...\n")
@@ -77,9 +79,8 @@ class Challenge2Controller:
         self.on_progress(f"Path calculated: {len(paths)} segments\n\n")
         paths = optimized_paths(paths)
 
-        is_video_mode = True
         self.on_progress("Taking off...\n")
-        self.drone.take_off(is_video_mode)
+        self.drone.take_off()
         # self.drone.center_yaw() # TODO: Risk flag
 
         for i in range(len(paths)):
@@ -111,7 +112,7 @@ class Challenge2Controller:
                 self.drone.perform_detection(object_direction, on_object_found=self.on_object_found)
 
         self.on_progress("Landing...\n")
-        self.drone.land(is_video_mode)
+        self.drone.land()
 
         self.on_progress("\n=== Race Complete ===\n")
 

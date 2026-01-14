@@ -1,6 +1,6 @@
 import heapq
 
-LOGS_ENABLED = False
+LOGS_ENABLED = True
 def LOG(message):
     if LOGS_ENABLED:
         print(message)

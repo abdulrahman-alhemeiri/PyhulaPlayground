@@ -1,9 +1,7 @@
 import tkinter as tk
 from PyhulaPlayground import Maze, PathFinder, Utils
-from PyhulaPlayground.Challenge2Gui import Gui
-import PyhulaPlayground.Challenge2Gui as Challenge2Gui
+from PyhulaPlayground.Challenge1Gui import Gui
 from PyhulaPlayground.Drone import Drone
-from PyhulaPlayground.Utils import optimized_paths
 
 file_name = "maze_challenge_1.txt"
 
@@ -86,5 +84,5 @@ class Challenge1Controller:
             self.gui.write_output_threadsafe(message)
 
 if __name__ == "__main__":
-    controller = Challenge2Controller()
+    controller = Challenge1Controller()
     controller.run()

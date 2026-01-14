@@ -1,7 +1,5 @@
-import time
 import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
-from typing import Dict, List
 import threading
 
 def alert_race_done():
@@ -11,7 +9,7 @@ class Gui:
     def __init__(self, root, on_start_discovery_callback=None, on_start_race_callback=None):
         self.root = root
         self.root.title("Challenge 1 Solver")
-        self.root.geometry("400x400")
+        self.root.geometry("600x600")
 
         self.on_start_discovery_callback = on_start_discovery_callback
         self.on_start_race_callback = on_start_race_callback
@@ -62,7 +60,7 @@ class Gui:
         ttk.Label(main_frame, text="Objects Found:").grid(row=6, column=0, sticky=tk.W, pady=5)
 
         # Objects Found Output
-        self.output_text = scrolledtext.ScrolledText(main_frame, width=50, height=10, state='disabled')
+        self.output_text = scrolledtext.ScrolledText(main_frame, width=50, height=20, state='disabled')
         self.output_text.grid(row=7, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=5)
 
         # Configure grid weights for resizing

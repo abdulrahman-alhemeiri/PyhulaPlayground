@@ -33,7 +33,8 @@ class Challenge2Controller:
         self.maze = Maze.Maze(width, height)
 
         challenge_number = 2
-        self.drone = Drone(bearing, challenge_number)
+        phase_number = 1
+        self.drone = Drone(bearing, challenge_number, phase_number)
 
         self.on_progress("Taking off...\n")
         self.drone.take_off()
@@ -71,7 +72,8 @@ class Challenge2Controller:
         self.found_count = 0
 
         challenge_number = 2
-        self.drone = Drone(bearing, challenge_number)
+        phase_number = 2
+        self.drone = Drone(bearing, challenge_number, phase_number)
         object_coordinates = objects.keys()
 
         self.on_progress("Calculating optimal path...\n")

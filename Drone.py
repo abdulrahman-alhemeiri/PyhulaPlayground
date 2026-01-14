@@ -28,35 +28,37 @@ def LOG(message):
         print(message)
 
 class Drone:
-    def __init__(self, bearing="North", challenge=1):
+    def __init__(self, bearing="North", challenge=1, phase=1):
         self.api = pyhula.UserApi()
         if not self.api.connect():
             print("connect error!!!!!!!")
             sys.exit(0)
         else:
             print("connection to station by wifi")
-        self.api.Plane_cmd_camera_angle(4, 0)
-        self.vid = hula_video(hula_api = self.api, display = False)
-        self.huladetector = onnxdetector(model="detect_3_object_12_11.onnx", label="object.txt", confidence_thres=0.4)
-        self.current_bearing = bearing
+
         self.challenge_number = challenge
+        self.phase_number = phase
+        self.current_bearing = bearing
         self.challenge_height = DEFAULT_HEIGHT
+
+        if self.phase_number == 1:
+            self.api.single_fly_barrier_aircraft(True)
+            time.sleep(SLEEP_VALUE)
+
+        if self.challenge_number == 2 and self.phase_number == 2:
+            self.api.Plane_cmd_camera_angle(4, 0)
+            self.vid = hula_video(hula_api = self.api, display = False)
+            self.huladetector = onnxdetector(model="detect_3_object_12_11.onnx", label="object.txt", confidence_thres=0.4)
+            self.vid.video_mode_on()
+
+        self.api.Plane_cmd_switch_QR(0)
+        time.sleep(SLEEP_VALUE)
         print(f"Started challenge: {self.challenge_number}")
         time.sleep(2)
 
     def take_off(self):
         print("+++++ taking off")
-        self.api.Plane_cmd_switch_QR(0)
         time.sleep(SLEEP_VALUE)
-
-        if self.challenge_number == 1:
-            self.api.single_fly_barrier_aircraft(True)
-
-        if self.challenge_number == 2:
-            self.vid.video_mode_on()
-
-        time.sleep(SLEEP_VALUE)
-
         self.api.single_fly_takeoff()
         time.sleep(SLEEP_VALUE)
 

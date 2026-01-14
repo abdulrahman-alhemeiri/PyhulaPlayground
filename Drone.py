@@ -44,11 +44,6 @@ class Drone:
         print(f"Started challenge: {self.challenge_number}")
         time.sleep(2)
 
-    def move_to_coordinates(self, x, y, z, sleep=SLEEP_VALUE):
-        LOG(f"move_to_coordinates()::: moving to coordinates: [X: {x}, Y: {y}, Z: {z}]")
-        self.api.single_fly_straight_flight(x, y, z, SPEED)
-        time.sleep(sleep)
-
     def take_off(self):
         print("+++++ taking off")
         self.api.Plane_cmd_switch_QR(0)
@@ -71,32 +66,10 @@ class Drone:
         if self.challenge_number == 2:
             self.vid.close()
 
-    def center_at_current_block(self):
-        LOG(f"center_at_current_block()::: centering at current block")
-        x, y, z = self.api.get_coordinate()
-        LOG(f"center_at_current_block()::: current coordinates: [X: {x}, Y: {y}, Z: {z}]")
-
-        if x < 0:
-            x = 0
-        if y < 0:
-            y = 0
-        LOG(f"center_at_current_block()::: after zeroing: [X: {x}, Y: {y}, Z: {z}]")
-
-        center_x = math.floor(x / 60.0) * 60 + 15
-        center_y = math.floor(y / 60.0) * 60 + 15
-        LOG(f"center_at_current_block()::: center coordinates: [X: {center_x}, Y: {center_y}, Z: {z}")
-        self.move_to_coordinates(center_x, center_y, z)
-
-    def center_yaw(self):
-        LOG("center_yaw()::: centering yaw")
-        yaw, pitch, roll = self.api.get_yaw()
-        LOG(f"center_yaw()::: current yaw: {yaw}")
-        if yaw > 0:
-            LOG("center_yaw()::: turning right")
-            self.api.single_fly_turnleft(yaw)
-        if yaw < 0:
-            LOG("center_yaw()::: turning left")
-            self.api.single_fly_turnright(yaw * -1)
+    def move_to_coordinates(self, x, y, z, sleep=SLEEP_VALUE):
+        LOG(f"move_to_coordinates()::: moving to coordinates: [X: {x}, Y: {y}, Z: {z}]")
+        self.api.single_fly_straight_flight(x, y, z, SPEED)
+        time.sleep(sleep)
 
     def move_to_block(self, x, y, z=DEFAULT_HEIGHT, is_last_step=False):
         LOG(f"move_to_block()::: moving to block: [X: {x}, Y: {y}]")
@@ -116,63 +89,6 @@ class Drone:
         if is_last_step:
             z = LAST_STEP_HEIGHT
         self.move_to_coordinates(target_x, target_y, z, sleep_value)
-
-    def get_barriers(self):
-        LOG(f"get_barriers()::: getting current barriers")
-        obstacles = self.api.Plane_getBarrier()
-        result = []
-        bearing_dictionary = {
-            "North": {
-                "forward": "forward",
-                "left": "left",
-                "back": "back",
-                "right": "right"
-            },
-            "West": {
-                "forward": "left",
-                "left": "back",
-                "back": "right",
-                "right": "forward"
-            },
-            "South": {
-                "forward": "back",
-                "left": "right",
-                "back": "forward",
-                "right": "left"
-            },
-            "East": {
-                "forward": "right",
-                "left": "forward",
-                "back": "left",
-                "right": "back"
-            }
-        }
-
-        if obstacles["forward"]:
-            result.append(bearing_dictionary[self.current_bearing]["forward"])
-        if obstacles["back"]:
-            result.append(bearing_dictionary[self.current_bearing]["back"])
-        if obstacles["right"]:
-            result.append(bearing_dictionary[self.current_bearing]["right"])
-        if obstacles["left"]:
-            result.append(bearing_dictionary[self.current_bearing]["left"])
-
-        LOG(f"get_barriers()::: Obstacles found: " + str(result))
-
-        return result
-
-    def get_current_block(self):
-        LOG(f"get_current_block()::: getting current block")
-        x, y, z = self.api.get_coordinate()
-        LOG(f"get_current_block()::: current coordinates: [X: {x}, Y: {y}, Z: {z}]")
-        block_x = math.floor(x / 60.0)
-        if block_x < 0:
-            block_x = 0
-        block_y = math.floor(y / 60.0)
-        if block_y < 0:
-            block_y = 0
-        LOG(f"get_current_block()::: current block: [X: {block_x}, Y: {block_y}]")
-        return block_x, block_y
 
     def traverse_path(self, path):
         if self.challenge_number == 1:
@@ -254,3 +170,87 @@ class Drone:
             print(f"Object NOT FOUND!")
 
         self.vid.stoprecording()
+
+    def get_barriers(self):
+        LOG(f"get_barriers()::: getting current barriers")
+        obstacles = self.api.Plane_getBarrier()
+        result = []
+        bearing_dictionary = {
+            "North": {
+                "forward": "forward",
+                "left": "left",
+                "back": "back",
+                "right": "right"
+            },
+            "West": {
+                "forward": "left",
+                "left": "back",
+                "back": "right",
+                "right": "forward"
+            },
+            "South": {
+                "forward": "back",
+                "left": "right",
+                "back": "forward",
+                "right": "left"
+            },
+            "East": {
+                "forward": "right",
+                "left": "forward",
+                "back": "left",
+                "right": "back"
+            }
+        }
+
+        if obstacles["forward"]:
+            result.append(bearing_dictionary[self.current_bearing]["forward"])
+        if obstacles["back"]:
+            result.append(bearing_dictionary[self.current_bearing]["back"])
+        if obstacles["right"]:
+            result.append(bearing_dictionary[self.current_bearing]["right"])
+        if obstacles["left"]:
+            result.append(bearing_dictionary[self.current_bearing]["left"])
+
+        LOG(f"get_barriers()::: Obstacles found: " + str(result))
+
+        return result
+
+    def get_current_block(self):
+        LOG(f"get_current_block()::: getting current block")
+        x, y, z = self.api.get_coordinate()
+        LOG(f"get_current_block()::: current coordinates: [X: {x}, Y: {y}, Z: {z}]")
+        block_x = math.floor(x / 60.0)
+        if block_x < 0:
+            block_x = 0
+        block_y = math.floor(y / 60.0)
+        if block_y < 0:
+            block_y = 0
+        LOG(f"get_current_block()::: current block: [X: {block_x}, Y: {block_y}]")
+        return block_x, block_y
+
+    def center_at_current_block(self):
+        LOG(f"center_at_current_block()::: centering at current block")
+        x, y, z = self.api.get_coordinate()
+        LOG(f"center_at_current_block()::: current coordinates: [X: {x}, Y: {y}, Z: {z}]")
+
+        if x < 0:
+            x = 0
+        if y < 0:
+            y = 0
+        LOG(f"center_at_current_block()::: after zeroing: [X: {x}, Y: {y}, Z: {z}]")
+
+        center_x = math.floor(x / 60.0) * 60 + 15
+        center_y = math.floor(y / 60.0) * 60 + 15
+        LOG(f"center_at_current_block()::: center coordinates: [X: {center_x}, Y: {center_y}, Z: {z}")
+        self.move_to_coordinates(center_x, center_y, z)
+
+    def center_yaw(self):
+        LOG("center_yaw()::: centering yaw")
+        yaw, pitch, roll = self.api.get_yaw()
+        LOG(f"center_yaw()::: current yaw: {yaw}")
+        if yaw > 0:
+            LOG("center_yaw()::: turning right")
+            self.api.single_fly_turnleft(yaw)
+        if yaw < 0:
+            LOG("center_yaw()::: turning left")
+            self.api.single_fly_turnright(yaw * -1)

@@ -49,10 +49,12 @@ class Challenge1Controller:
         start = params['start']
         bearing = params['bearing']
         goal = params['goal']
+        is_risky = params['is_risky']
 
         self.on_progress("=== Challenge 1 Maze Solving (Race) Started ===\n")
         self.on_progress(f"Start: {start}, Bearing: {bearing}\n")
-        self.on_progress(f"Goal: {goal}\n\n")
+        self.on_progress(f"Goal: {goal}\n")
+        self.on_progress(f"Risky run value: {is_risky}\n\n")
 
         self.on_progress("loading maze...\n")
         maze = Utils.load_maze_from_file(file_name)
@@ -61,7 +63,9 @@ class Challenge1Controller:
             self.gui.write_output("\n***WARNING***: Maze file not found.\n")
             return
 
-        self.drone = Drone(bearing)
+        challenge_number = 1
+        phase_number = 2
+        self.drone = Drone(bearing, challenge_number, phase_number, is_risky)
 
         self.on_progress("Calculating optimal path...\n")
         path = PathFinder.astar_straight_preference(maze, start, goal)
@@ -69,7 +73,6 @@ class Challenge1Controller:
 
         self.on_progress("Taking off...\n")
         self.drone.take_off()
-        # self.drone.center_yaw() # TODO: Risk flag
 
         self.on_progress(f"Traversing optimal path\n")
         self.drone.traverse_path(optimized_path)

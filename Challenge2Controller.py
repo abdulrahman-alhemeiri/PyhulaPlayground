@@ -56,11 +56,13 @@ class Challenge2Controller:
         start = params['start']
         bearing = params['bearing']
         objects = params['objects']
+        is_risky = params['is_risky']
         self.num_objects = sum(len(v) for v in objects.values())
 
         self.on_progress("=== Challenge 2 Maze Solving (Race) Started ===\n")
         self.on_progress(f"Start: {start}, Bearing: {bearing}\n")
-        self.on_progress(f"Objects to find: {self.num_objects}\n\n")
+        self.on_progress(f"Objects to find: {self.num_objects}\n")
+        self.on_progress(f"Risky run value: {is_risky}\n\n")
 
         self.on_progress("loading maze...\n")
         maze = Utils.load_maze_from_file(file_name)
@@ -73,7 +75,7 @@ class Challenge2Controller:
 
         challenge_number = 2
         phase_number = 2
-        self.drone = Drone(bearing, challenge_number, phase_number)
+        self.drone = Drone(bearing, challenge_number, phase_number, is_risky)
         object_coordinates = objects.keys()
 
         self.on_progress("Calculating optimal path...\n")
@@ -83,7 +85,6 @@ class Challenge2Controller:
 
         self.on_progress("Taking off...\n")
         self.drone.take_off()
-        # self.drone.center_yaw() # TODO: Risk flag
 
         for i in range(len(paths)):
             self.on_progress(f"Traversing segment {i + 1}/{len(paths)}...\n")

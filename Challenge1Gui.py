@@ -46,7 +46,7 @@ class Gui:
         ttk.Label(main_frame, text="Goal Location:").grid(row=3, column=0, sticky=tk.W, pady=5)
         self.goal_location_entry = ttk.Entry(main_frame, width=50)
         self.goal_location_entry.grid(row=3, column=1, sticky=(tk.W, tk.E), pady=5)
-        self.goal_location_entry.insert(0, "0,0")  # Default value
+        self.goal_location_entry.insert(0, "0,4")  # Default value
 
         # Start Discovery Button
         self.start_discovery_button = ttk.Button(main_frame, text="Start Discovery", command=self._on_start_discovery_clicked)
@@ -55,6 +55,11 @@ class Gui:
         # Start Race Button
         self.start_race_button = ttk.Button(main_frame, text="Start Race", command=self._on_start_race_clicked)
         self.start_race_button.grid(row=5, column=1, columnspan=1, pady=15)
+
+        # Risk checkbox
+        self.risk_value = tk.BooleanVar(value=False)
+        self.risk_checkbox = ttk.Checkbutton(main_frame, text="Risky race?", variable=self.risk_value)
+        self.risk_checkbox.grid(row=5, column=2, columnspan=1, pady=15)
 
         # Objects Found Label
         ttk.Label(main_frame, text="Objects Found:").grid(row=6, column=0, sticky=tk.W, pady=5)
@@ -79,17 +84,21 @@ class Gui:
 
             bearing = self.bearing_var.get()
 
+            is_risky = self.risk_value.get()
+
             params = {
                 'width': width,
                 'height': height,
                 'start': start,
-                'bearing': bearing
+                'bearing': bearing,
+                'is_risky': is_risky
             }
 
             message = (
                 f"Maze Size: {width}x{height}\n"
                 f"Start Position: {start}\n"
-                f"Drone Initial Bearing: {bearing}\n\n"
+                f"Drone Initial Bearing: {bearing}\n"
+                f"Risky run value: {is_risky}\n\n"
                 f"This will delete existing maze text file.\n"
                 f"Make sure it is safe and you're clear for takeoff.\n\n"
                 f"Start discovery?"
@@ -140,16 +149,21 @@ class Gui:
         x, y = map(int, goal_location.split(','))
         goal = (x, y)
 
+        is_risky = self.risk_value.get()
+
         params = {
             'start': start,
             'bearing': bearing,
-            'goal': goal
+            'goal': goal,
+            'is_risky': is_risky
         }
 
         message = (
             f"Start Position: {start}\n"
             f"Drone Initial Bearing: {bearing}\n"
-            f"Goal: {goal}\n\n"
+            f"Goal: {goal}\n"
+            f"Risky run value: {is_risky}\n\n"
+
             f"Make sure you have finished discovery for the current maze setup.\n"
             f"Make sure it is safe and you're clear for takeoff.\n\n"
             f"Start race?"

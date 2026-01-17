@@ -59,6 +59,11 @@ class Gui:
         self.start_race_button = ttk.Button(main_frame, text="Start Race", command=self._on_start_race_clicked)
         self.start_race_button.grid(row=5, column=1, columnspan=1, pady=15)
 
+        # Risk checkbox
+        self.risk_value = tk.BooleanVar(value=False)
+        self.risk_checkbox = ttk.Checkbutton(main_frame, text="Risky race?", variable=self.risk_value)
+        self.risk_checkbox.grid(row=5, column=2, columnspan=1, pady=15)
+
         # Objects Found Label
         ttk.Label(main_frame, text="Objects Found:").grid(row=6, column=0, sticky=tk.W, pady=5)
 
@@ -167,16 +172,21 @@ class Gui:
             self.write_output(f"No objects found.\n\n")
             return
 
+        is_risky = self.risk_value.get()
+
         params = {
             'start': start,
             'bearing': bearing,
-            'objects': object_data
+            'objects': object_data,
+            'is_risky': is_risky
         }
 
         message = (
             f"Start Position: {start}\n"
             f"Drone Initial Bearing: {bearing}\n"
-            f"Objects: {len(object_data)}\n\n"
+            f"Objects: {len(object_data)}\n"
+            f"Risky run value: {is_risky}\n\n"
+
             f"Make sure you have finished discovery for the current maze setup.\n"
             f"Make sure it is safe and you're clear for takeoff.\n\n"
             f"Start race?"

@@ -22,19 +22,21 @@ SLEEP_VALUE = 0.8
 
 OBJECT_DETECTION_MAX_TRIES = 100
 
-LOGS_ENABLED = True
+LOGS_ENABLED = False
 def LOG(message):
     if LOGS_ENABLED:
         print(message)
 
 class Drone:
-    def __init__(self, bearing="North", challenge=1, phase=1):
+    def __init__(self, bearing="North", challenge=1, phase=1, risky=False):
         self.api = pyhula.UserApi()
         if not self.api.connect():
             print("connect error!!!!!!!")
             sys.exit(0)
         else:
             print("connection to station by wifi")
+
+        self.is_risky = risky
 
         self.challenge_number = challenge
         self.phase_number = phase
@@ -69,7 +71,7 @@ class Drone:
             self.vid.close()
 
     def move_to_coordinates(self, x, y, z, sleep=SLEEP_VALUE):
-        LOG(f"move_to_coordinates()::: moving to coordinates: [X: {x}, Y: {y}, Z: {z}]")
+        LOG(f"move_to_coordinates()::: moving to coordinates: [X: {x}, Y: {y}, Z: {z}], followed by sleep value: {sleep}")
         self.api.single_fly_straight_flight(x, y, z, SPEED)
         time.sleep(sleep)
 
@@ -84,6 +86,9 @@ class Drone:
 
         movement_length = Utils.length(current_block, (x,y))
         sleep_value = SLEEP_BASE_VALUE + (movement_length * SLEEP_INCREMENT_VALUE)
+
+        if self.is_risky:
+            sleep_value = 0
 
         target_x = 60 * x + 15
         target_y = 60 * y + 15
@@ -244,7 +249,7 @@ class Drone:
         center_x = math.floor(x / 60.0) * 60 + 15
         center_y = math.floor(y / 60.0) * 60 + 15
         LOG(f"center_at_current_block()::: center coordinates: [X: {center_x}, Y: {center_y}, Z: {z}")
-        self.move_to_coordinates(center_x, center_y, z)
+        self.move_to_coordinates(center_x, center_y, z, 0)
 
     def center_yaw(self):
         LOG("center_yaw()::: centering yaw")

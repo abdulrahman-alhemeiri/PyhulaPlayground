@@ -10,7 +10,7 @@ from .hula_video import hula_video
 from .onnxdetector import onnxdetector
 from datetime import datetime, timezone
 
-DEFAULT_HEIGHT = 95
+DEFAULT_HEIGHT = 90
 DESCENDING_INCREMENTAL_VALUE = 3
 MINIMUM_HEIGHT = 65
 LAST_STEP_HEIGHT = 40

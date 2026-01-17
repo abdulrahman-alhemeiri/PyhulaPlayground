@@ -97,7 +97,7 @@ class Challenge2Controller:
             #     current_block[1] = maze.height - 1
 
             # After:
-            current_block = self.drone.get_current_block()
+            current_block = paths[i][len(paths[i]) - 1]#self.drone.get_current_block()
             current_block_x = current_block[0]
             current_block_y = current_block[1]
 

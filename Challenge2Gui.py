@@ -49,7 +49,8 @@ class Gui:
         self.objects_text = scrolledtext.ScrolledText(main_frame, width=50, height=6)
         self.objects_text.grid(row=4, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=5)
         # Default values
-        self.objects_text.insert("1.0", "1,4,East\n2,3,West\n3,4,South\n3,3,East")
+        self.objects_text.insert("1.0", "3,4,North\n3,3,West\n2,1,East\n2,0,South")
+
 
         # Start Discovery Button
         self.start_discovery_button = ttk.Button(main_frame, text="Start Discovery", command=self._on_start_discovery_clicked)

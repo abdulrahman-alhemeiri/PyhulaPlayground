@@ -148,12 +148,14 @@ class Drone:
         self.current_bearing = direction
         return
 
-    def perform_detection(self, direction, on_object_found=None, on_progress=None):
+    def perform_detection(self, direction, current_block=None,on_object_found=None, on_progress=None):
         print(f"+++++ Performing object detection at direction {direction}")
         self.turn_to_bearing(direction)
-        current_block = self.get_current_block()
+        if current_block is None:
+            current_block = self.get_current_block()
         cell_file_name = f"Cell({current_block[0]}, {current_block[1]})_{direction}_"
-        self.center_at_current_block()
+        if not self.is_risky:
+            self.center_at_current_block()
         self.vid.startrecording(cell_file_name)
         object_found = False
         for i in range(OBJECT_DETECTION_MAX_TRIES):
